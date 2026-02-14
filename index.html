@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mere Dil Ki Gudiya</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Caveat:wght@600&family=Hind:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --warm-pink: #ff85a1; --soft-red: #ff4d6d; --deep-rose: #c9184a; --bg-pink: #fff0f3; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-pink); height: 100vh; width: 100vw; overflow: hidden; display: flex; justify-content: center; align-items: center; font-family: 'Hind', sans-serif; }
+
+        /* Animated Background */
+        .bg-overlay {
+            position: fixed; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(135deg, #fff0f3 0%, #ffc2d1 50%, #ff85a1 100%);
+            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
+
+        .container { 
+            width: 90%; max-width: 450px; text-align: center; 
+            padding: 30px; background: rgba(255, 255, 255, 0.7); 
+            border-radius: 40px; backdrop-filter: blur(15px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); position: relative; z-index: 10;
+        }
+
+        .screen { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .active { display: flex; animation: smoothFade 1s ease; }
+        @keyframes smoothFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        .grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 6px; background: white; padding: 12px; border-radius: 20px; }
+        .tile { width: 100px; height: 100px; background-image: url('R.jpg'); background-size: 300px 300px; border-radius: 10px; cursor: pointer; }
+        .empty { background: #ffeef2 !important; border: 2px dashed var(--warm-pink); }
+
+        .btn {
+            margin-top: 25px; padding: 15px 45px; font-size: 1.2rem; 
+            background: var(--soft-red); color: white; border: none; 
+            border-radius: 50px; cursor: pointer; font-weight: 600;
+            transition: 0.4s; box-shadow: 0 8px 20px rgba(255, 77, 109, 0.3);
+            position: relative; z-index: 1001;
+        }
+
+        .photo-area { position: relative; width: 100%; height: 420px; display: flex; flex-direction: column; align-items: center; }
+        .card {
+            position: absolute; width: 300px; background: white; padding: 15px 15px 60px 15px; border-radius: 5px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15); transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
+            opacity: 0; pointer-events: none; transform: scale(0.8) translateY(20px);
+        }
+        .card.show { opacity: 1; pointer-events: auto; transform: scale(1) translateY(0); }
+        .card.exit { opacity: 0; transform: scale(1.1) rotate(5deg); }
+        .card img { width: 100%; height: 280px; object-fit: cover; border-radius: 3px; }
+        .photo-desc { position: absolute; bottom: 15px; left: 0; width: 100%; font-family: 'Caveat', cursive; font-size: 1.4rem; color: #444; padding: 0 10px; }
+
+        /* Video Layer */
+        #video-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bg-pink); z-index: -1; 
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.5s ease;
+        }
+        video { width: 100%; height: 100%; object-fit: contain; }
+
+        /* Smile End Screen */
+        #final-smile-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bg-pink); z-index: 6000; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            animation: smoothFade 1s ease;
+        }
+        .smile-emoji { font-size: 80px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        .burst { position: fixed; pointer-events: none; z-index: 3000; }
+        .floating-heart { position: absolute; pointer-events: none; animation: floatUp 8s linear infinite; z-index: 1;}
+        @keyframes floatUp { 0% { transform: translateY(110vh) rotate(0deg); opacity: 0; } 20% { opacity: 0.6; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-overlay"></div>
+    <audio id="bgMusic" loop><source src="l.mp3" type="audio/mpeg"></audio>
+
+    <div id="video-screen">
+        <video id="finalVideo" playsinline preload="auto">
+            <source src="vale.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div id="final-smile-screen">
+        <div class="smile-emoji">😊❤️</div>
+        <h1 style="font-family: 'Pacifico'; color: var(--deep-rose); margin-top: 20px;">Tumhari hasi hi meri duniya hai!</h1>
+        <p style="font-family: 'Caveat'; font-size: 1.8rem; color: #444;">Happy Valentine's Day, Gudiya!</p>
+        <button class="btn" onclick="location.reload()">Love You</button>
+    </div>
+
+    <div class="container" id="main-ui">
+        <div id="scr-intro" class="screen active">
+            <h1 style="font-family: 'Pacifico'; color: var(--deep-rose);">Suno Gudiya...</h1>
+            <p style="color: #666; font-size: 1.1rem;">Maine kuch purani yaadon ko sameta hai.</p>
+            <button class="btn" onclick="startApp()">Yahaan click karo piddi! ✨</button>
+        </div>
+
+        <div id="scr-puzzle" class="screen">
+            <h1 style="font-size: 1.6rem; color: var(--deep-rose);">Ise Jodo ❤️</h1>
+            <div class="grid" id="grid"></div>
+            <button class="btn" id="next-btn" style="display: none;" onclick="goMessage()">Next</button>
+        </div>
+
+        <div id="scr-msg" class="screen">
+            <div id="type-text" style="font-family:'Caveat'; font-size: 1.8rem; min-height: 120px; color: var(--deep-rose);"></div>
+            <button class="btn" id="final-btn" style="display: none;" onclick="goFinal()">Yaadein 📸</button>
+        </div>
+
+        <div id="scr-final" class="screen">
+            <div class="photo-area" id="photo-area"></div>
+            <button class="btn" id="video-trigger" style="display: none;" onclick="celebrateAndPlay()">Click Here 🎁</button>
+        </div>
+    </div>
+
+    <script>
+        const music = document.getElementById('bgMusic');
+        const video = document.getElementById('finalVideo');
+        const vScreen = document.getElementById('video-screen');
+        let tiles = [0,1,2,3,4,5,6,7,8];
+        let solved = false;
+
+        // Saare messages wapas add kar diye gaye hain
+        const messages = [
+            "Hamari pyaari jodi.. ❤️", "Tumhari ye smile sabse pyaari hai ✨",
+            "love you bab", "Ye wala din kitna special tha na?",
+            "Tum har pose mai bawal lagti ho 👗", "Hayee tumhari ada! ❤️",
+            "Mera favorite pal tumhare saath!", "Tumse mil kar laga duniya mil gayi 🌸",
+            "Hamesha aise hi khush rehna Gudiya", "Tumhari aankhein bohot bolti hain 👀",
+            "meri pyaari Noorejahan", "Zindagi tumhare bina adhuri hai",
+            "kitni pyaari lag rahi ho ✨", "I love you forever! ❤️"
+        ];
+
+        function startApp() {
+            music.currentTime = 108; music.play();
+            document.getElementById('scr-intro').classList.remove('active');
+            document.getElementById('scr-puzzle').classList.add('active');
+            initPuzzle(); createDecor();
+        }
+
+        function initPuzzle() {
+            for(let i=0; i<100; i++){
+                let e = tiles.indexOf(8);
+                let n = []; let r=Math.floor(e/3), c=e%3;
+                if(r>0) n.push(e-3); if(r<2) n.push(e+3); if(c>0) n.push(e-1); if(c<2) n.push(e+1);
+                let m = n[Math.floor(Math.random()*n.length)];
+                [tiles[e], tiles[m]] = [tiles[m], tiles[e]];
+            }
+            render();
+        }
+
+        function render() {
+            const g = document.getElementById('grid'); g.innerHTML = '';
+            tiles.forEach((t, i) => {
+                const d = document.createElement('div');
+                d.className = 'tile' + (t===8 && !solved ? ' empty' : '');
+                d.style.backgroundPosition = `-${(t%3)*100}px -${Math.floor(t/3)*100}px`;
+                if(!solved) d.onclick = () => {
+                    let e = tiles.indexOf(8);
+                    if(Math.abs(Math.floor(i/3)-Math.floor(e/3)) + Math.abs((i%3)-(e%3)) === 1){
+                        [tiles[i], tiles[e]] = [tiles[e], tiles[i]]; render(); 
+                        if(tiles.every((t,x)=>t===x)){solved=true; render(); setTimeout(()=>document.getElementById('next-btn').style.display='block', 800);}
+                    }
+                };
+                g.appendChild(d);
+            });
+        }
+
+        function goMessage() {
+            document.getElementById('scr-puzzle').classList.remove('active');
+            document.getElementById('scr-msg').classList.add('active');
+            let txt = "Jaise ye photo jud gayi, waise hi tumne mujhe poora kiya hai. Bhale hi hum door ho lekin humara pyaar hamesha ek dusre ke pass rehta hai. aur haan khush raha karo ye to ho gayi pyaar ki baat lekin mai ab bhi tumsw gussa . mazak kar raha hu ab chalo aage badho love you... ❤️"; 
+            let i = 0;
+            function type() { if(i < txt.length){ document.getElementById('type-text').innerHTML += txt.charAt(i); i++; setTimeout(type, 70); } else document.getElementById('final-btn').style.display='block'; }
+            type();
+        }
+
+        function goFinal() {
+            document.getElementById('scr-msg').classList.remove('active');
+            document.getElementById('scr-final').classList.add('active');
+            const area = document.getElementById('photo-area');
+            for(let i=1; i<=14; i++){
+                const c = document.createElement('div'); c.className = 'card'; c.id = `card-${i}`;
+                c.innerHTML = `<img src="${i}.jpg"><div class="photo-desc">${messages[i-1]}</div>`;
+                area.appendChild(c);
+            }
+            let cur = 1; document.getElementById('card-1').classList.add('show');
+            let inv = setInterval(() => {
+                document.getElementById(`card-${cur}`).classList.replace('show', 'exit');
+                cur++; if(cur > 14){ clearInterval(inv); document.getElementById('video-trigger').style.display='block'; return; }
+                document.getElementById(`card-${cur}`).classList.add('show');
+            }, 4000);
+        }
+
+        function celebrateAndPlay() {
+            for(let i=0; i<40; i++) setTimeout(createBurst, i * 40);
+            video.play();
+            let checkVideo = setInterval(() => {
+                if (video.currentTime > 0.1) {
+                    vScreen.style.zIndex = "5000"; vScreen.style.opacity = "1";
+                    document.getElementById('main-ui').style.opacity = "0";
+                    clearInterval(checkVideo);
+                }
+            }, 10);
+        }
+
+        // Jab video khatam ho jaye tab Smile screen dikhao
+        video.onended = function() {
+            vScreen.style.display = 'none';
+            document.getElementById('final-smile-screen').style.display = 'flex';
+        };
+
+        function createBurst() {
+            const b = document.createElement('div'); b.className = 'burst';
+            b.innerHTML = ['❤️','💖','✨','🌹','🌸','🎈'][Math.floor(Math.random()*6)];
+            b.style.left = '50%'; b.style.top = '50%';
+            b.style.fontSize = (Math.random()*40 + 20)+'px';
+            const a = Math.random()*Math.PI*2; const d = Math.random()*250 + 100;
+            const x = Math.cos(a)*d; const y = Math.sin(a)*d;
+            document.body.appendChild(b);
+            b.animate([{transform:'translate(-50%,-50%) scale(0)', opacity:1}, {transform:`translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(2)`, opacity:0}], {duration:2000, easing:'ease-out'});
+            setTimeout(()=>b.remove(), 2000);
+        }
+
+        function createDecor() {
+            for(let i=0; i<20; i++){
+                const h = document.createElement('div'); h.className = 'floating-heart';
+                h.innerHTML = ['❤️','💖','✨','🌸'][Math.floor(Math.random()*4)];
+                h.style.left = Math.random()*100+'vw'; h.style.animationDelay = Math.random()*5+'s';
+                document.body.appendChild(h);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gudiya's Magical Surprise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Bungee&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root { --pink: #ff4d6d; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background: #ff69b4;
+            height: 100vh; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            transition: background 1s ease;
+            font-family: 'Dancing Script', cursive;
+        }
+
+        /* Hearts */
+        .heart { position: absolute; pointer-events: none; z-index: 1; user-select: none; }
+        @keyframes float-around {
+            0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+            100% { transform: translate3d(0, -150vh, 0) rotate(360deg) scale(1.2); }
+        }
+
+        .screen { position: absolute; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 10; opacity: 0; transition: opacity 0.4s ease; }
+        .active { display: flex; opacity: 1; }
+
+        /* Floating Character Bubble */
+        .character-bubble {
+            background: white; color: var(--pink);
+            padding: 10px 20px; border-radius: 20px;
+            font-family: 'Bungee'; font-size: 14px;
+            margin-bottom: 10px; position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: bounce 2s infinite;
+        }
+        .character-bubble::after {
+            content: ''; position: absolute; bottom: -10px; left: 50%;
+            border-left: 10px solid transparent; border-right: 10px solid transparent;
+            border-top: 10px solid white; transform: translateX(-50%);
+        }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* Puzzle Grid */
+        .grid { display: grid; grid-template-columns: repeat(3, 90px); gap: 10px; }
+        .tile { width: 90px; height: 90px; background-image: url('R.jpg'); background-size: 270px 270px; border-radius: 12px; border: 3px solid #fff; cursor: pointer; }
+        .empty { background: rgba(255,255,255,0.1) !important; border: 3px dashed rgba(255,255,255,0.4); }
+
+        .btn { padding: 18px 50px; font-size: 24px; font-family: 'Bungee'; background: var(--pink); color: white; border: none; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 0 #c9184a; }
+        .btn:active { transform: translateY(5px); box-shadow: 0 5px 0 #c9184a; }
+
+        .typo-text { font-size: 2.5rem; color: white; margin: 10px 0; opacity: 0; transform: translateY(20px); transition: 0.6s ease; text-shadow: 2px 2px 10px rgba(0,0,0,0.3); text-align: center; }
+        .typo-text.reveal { opacity: 1; transform: translateY(0); }
+
+        /* Video & Slider */
+        #video-screen { background: #ff4d6d; }
+        video#final-video { width: 100%; height: 100%; object-fit: cover; }
+        .polaroid { width: 300px; background: #fff; padding: 15px 15px 70px 15px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); position: relative; transition: transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 1s ease; }
+        .polaroid img { width: 100%; height: 300px; object-fit: cover; }
+
+        /* Scanner Screen */
+        #location-spotted { background: #000; color: #00ff00; font-family: 'Courier New', monospace; text-align: center; }
+        .scanner-line { width: 100%; height: 2px; background: #00ff00; position: absolute; top: 0; animation: scan 2s linear infinite; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+    </style>
+</head>
+<body>
+
+    <audio id="bgMusic" loop>
+        <source src="l.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="ui-intro" class="screen active">
+        <div class="character-bubble">Hello Gudiya! (◕‿◕)</div>
+        <div style="text-align: center; background: rgba(255,255,255,0.2); padding: 30px; border-radius: 30px; backdrop-filter: blur(10px);">
+            <img src="gogo.gif" style="width: 130px; border-radius: 20px;">
+            <br><br>
+            <button class="btn" onclick="startApp()">START MAGIC ✨</button>
+        </div>
+    </div>
+
+    <div id="ui-puzzle" class="screen">
+        <div id="puzzle-msg" class="character-bubble" style="display:none">Solve it, Pretty Lady! ( ^_^)</div>
+        <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 25px; backdrop-filter: blur(10px);">
+            <div class="grid" id="grid"></div>
+            <button class="btn" id="continue-btn" style="display: none; margin-top: 20px;" onclick="startTypography()">CONTINUE 💕</button>
+        </div>
+    </div>
+
+    <div id="typo-screen" class="screen">
+        <div class="character-bubble">Listen Carefully... (✿◠‿◠)</div>
+        <p class="typo-text">Suno...</p>
+        <p class="typo-text">Do You Know My Lady 💖</p>
+        <p class="typo-text">Chalo chale ek ladki se milne...</p>
+        <p class="typo-text">Jo bohot pyari hai</p>
+        <p class="typo-text">Jo bohot cute hai</p>
+        <p class="typo-text">Jo bohot natkhat hai</p>
+        <button class="btn" id="flight-btn" style="display: none; margin-top: 30px;" onclick="goToVideo()">TAKE FLIGHT ✈️</button>
+    </div>
+
+    <div id="video-screen" class="screen">
+        <video id="final-video" playsinline preload="auto">
+            <source src="t.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <div id="location-spotted" class="screen">
+        <div class="scanner-line"></div>
+        <div class="character-bubble" style="color:#000; border:none">Scanning Shahganj... (ʘ‿ʘ)</div>
+        <h1 style="font-size: 2.5rem; margin-top: 20px;">TARGET SPOTTED! 🎯</h1>
+        <p style="color: #fff; font-size: 1.2rem; margin-top: 10px;">Found the World's Cutest Girl!</p>
+    </div>
+
+    <div id="ui-slider" class="screen">
+        <div id="slider-char" class="character-bubble">You are so Beautiful! (♥‿♥)</div>
+        <div id="slider-box" class="polaroid">
+            <img id="main-photo" src="1.jpg">
+        </div>
+        <p id="note" style="font-family: 'Dancing Script'; font-size: 2.2rem; color: white; margin-top: 20px; text-shadow: 0 0 15px #ff4d6d; text-align: center;"></p>
+    </div>
+
+    <script>
+        const music = document.getElementById('bgMusic');
+        const video = document.getElementById('final-video');
+        let tiles = [0,1,2,3,4,5,6,7,8];
+        const colors = ['#FF1493', '#FF69B4', '#FFB6C1', '#FFC0CB', '#FF6B9D', '#C71585'];
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startApp() {
+            music.play();
+            music.volume = 0.8; // Music fixed at 80% (High and Equal)
+            showScreen('ui-puzzle');
+            document.getElementById('puzzle-msg').style.display = 'block';
+            generateSolvablePuzzle();
+        }
+
+        // --- Puzzle Logic ---
+        function generateSolvablePuzzle() {
+            do { tiles.sort(() => Math.random() - 0.5); } while (!isSolvable(tiles));
+            renderPuzzle();
+        }
+        function isSolvable(arr) {
+            let inv = 0;
+            for(let i=0; i<8; i++) for(let j=i+1; j<9; j++) if(arr[i]!=8 && arr[j]!=8 && arr[i]>arr[j]) inv++;
+            return inv % 2 === 0;
+        }
+        function renderPuzzle() {
+            const grid = document.getElementById('grid'); grid.innerHTML = '';
+            tiles.forEach((t, i) => {
+                const div = document.createElement('div');
+                div.className = 'tile' + (t === 8 ? ' empty' : '');
+                if(t !== 8) div.style.backgroundPosition = `${(t % 3) * -90}px ${Math.floor(t / 3) * -90}px`;
+                div.onclick = () => {
+                    let empty = tiles.indexOf(8);
+                    if (Math.abs(Math.floor(i/3)-Math.floor(empty/3)) + Math.abs(i%3-empty%3) === 1) {
+                        [tiles[empty], tiles[i]] = [tiles[i], tiles[empty]];
+                        renderPuzzle();
+                        if (tiles.every((v,k)=>v===k)) {
+                            document.getElementById('continue-btn').style.display='block';
+                            document.getElementById('puzzle-msg').innerText = "Perfect, Pretty Lady! (ᵔᴥᵔ)";
+                        }
+                    }
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        // --- Typography ---
+        function startTypography() {
+            showScreen('typo-screen');
+            const lines = document.querySelectorAll('.typo-text');
+            lines.forEach((line, index) => {
+                setTimeout(() => { line.classList.add('reveal'); 
+                if (index === lines.length - 1) setTimeout(() => { document.getElementById('flight-btn').style.display = 'block'; }, 1000);
+                }, index * 1200);
+            });
+        }
+
+        // --- Video & Transition (NO VOLUME FADE) ---
+        function goToVideo() {
+            video.currentTime = 0;
+            video.play().then(() => {
+                showScreen('video-screen');
+                // No music volume change here!
+            });
+        }
+
+        video.onended = () => {
+            showScreen('location-spotted');
+            setTimeout(() => {
+                showScreen('ui-slider');
+                startSlider();
+            }, 3500);
+        };
+
+        // --- Slider ---
+        function startSlider() {
+            const images = ["1.jpg","2.jpg","3.jpg","4.jpg","7.jpg","8.jpg"];
+            const notes = ["Shahganj Ki Shaan! 😍", "My Queen 👑", "Pyaari Gudiya ✨", "Love You 💙", "Sundar! 🌹", "Meri Jaan 🥰"];
+            const charMsgs = ["You are so Beautiful! (♥‿♥)", "Stay Happy! (◕‿◕)", "My Favorite Girl! (✿◠‿◠)", "Keep Smiling! (ᵔᴥᵔ)", "Looking Gorgeous! (♥_♥)"];
+            let idx = 0;
+            const photo = document.getElementById('main-photo');
+            const noteText = document.getElementById('note');
+            const box = document.getElementById('slider-box');
+            const sliderChar = document.getElementById('slider-char');
+            
+            noteText.textContent = notes[0];
+            setInterval(() => {
+                box.style.transform = "translateY(100vh) rotate(180deg) scale(0)";
+                box.style.opacity = "0";
+                setTimeout(() => {
+                    idx = (idx + 1) % images.length;
+                    photo.src = images[idx];
+                    noteText.textContent = notes[idx];
+                    sliderChar.innerText = charMsgs[idx % charMsgs.length];
+                    document.body.style.background = colors[idx];
+                    box.style.transition = "none";
+                    box.style.transform = "translateY(-100vh) rotate(-180deg) scale(0)";
+                    setTimeout(() => {
+                        box.style.transition = "transform 1s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 1s ease";
+                        box.style.transform = "translateY(0) rotate(-3deg) scale(1)";
+                        box.style.opacity = "1";
+                    }, 50);
+                }, 1000);
+            }, 4000);
+        }
+
+        // --- Hearts ---
+        setInterval(() => {
+            const h = document.createElement('div');
+            h.className = 'heart';
+            h.innerHTML = ['❤️', '💖', '💕', '💗'][Math.floor(Math.random()*4)];
+            h.style.left = Math.random() * 100 + 'vw';
+            h.style.top = '110vh';
+            h.style.fontSize = (Math.random() * 30 + 15) + 'px';
+            h.style.animation = `float-around ${Math.random()*3+3}s ease-in forwards`;
+            document.body.appendChild(h);
+            setTimeout(() => h.remove(), 4000);
+        }, 150);
+    </script>
+</body>
+</html>
